@@ -1,5 +1,6 @@
 const User = require('../models/User');
 const Thought=require('../models/Thought')
+
 module.exports = {
   async getUsers(req, res) {
     try {
@@ -53,12 +54,6 @@ module.exports = {
   },
   async deleteUser(req, res) {
     try {
-      const thought = await Thought.findOneAndRemove({ username: req.params.username });
-
-      if (!thought) {
-        return res.status(404).json({ message: 'No thought with this id!' });
-      }
-
       const user = await User.findOneAndRemove(
         { _id: req.params.userId },
         { new: true }
@@ -71,6 +66,46 @@ module.exports = {
       }
 
       res.json({ message: 'user successfully deleted!' });
+    } catch (err) {
+      res.status(500).json(err);
+    }
+  },
+  async addFriend(req, res) {
+    try {
+      const user = await User.findOneAndUpdate(
+        { _id: req.params.userId },
+        { $addToSet: { friends: req.params.friendId } },
+        { new: true }
+      );
+
+      if (!user) {
+        return res.status(404).json({
+          message: 'Friend added, but found no user with that ID',
+        });
+      }
+
+      res.json('Added The Friend 🎉');
+    } catch (err) {
+      console.log(err);
+      res.status(500).json(err);
+    }
+  },
+  async removeFriend(req, res) {
+    try {
+
+      const user = await User.findOneAndUpdate(
+        {_id: req.params.userId },
+        { $pull: { friends: req.params.friendId} },
+        { new: true }
+      );
+
+      if (!user) {
+        return res
+          .status(404)
+          .json({ message: 'Friend added but no user with this id!' });
+      }
+
+      res.json({ message: 'Friend successfully removed.' });
     } catch (err) {
       res.status(500).json(err);
     }
